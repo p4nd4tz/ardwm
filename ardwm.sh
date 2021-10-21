@@ -1,49 +1,66 @@
 #!/bin/sh
 
-id=$(id -u)
-if [ $id == 0 ]; then
-  dialog --infobox "This script should not be run as root,\ncause you could ruin your system.\nAnd you do not want to install your base system again " 7 50
+uname=$(whoami)
+
+if [ "$(id -u)" = 0 ]; then
+  echo "##################################################################"
+  echo "This script MUST NOT be run as root user."
+  echo "cause you could ruin you system."
+  echo "And you do not want to install your base system again"
+  echo "##################################################################"
   exit 1
 fi 
 
-while getopts "h:p" o; do 
-	case "${o}" in
-	h) printf "Optional arguments for custom use:\\n -p: Dependencies and programs csv (local file or url)\\n -h: Show this message\\n" && exit 1 ;;
-	p) progsfile=${OPTARG} ;;
-	*) printf "Invalid option: -%s\\n" "$OPTARG" && exit 1 ;;
-esac done
-
-[ -z "$progsfile" ] && progsfile="https://raw.githubusercontent.com/riceDwm/master/progs.csv"
-
-
-## Welcome user
-uname=$(whoami)
-
-welcome(){ \
-  # printf "%s" "WELCOME $uname"
-  figlet "welcome $uname"
+error() { \
+    clear; printf "ERROR:\\n%s\\n" "$1" >&2; exit 1;
 }
 
-welcomemsg() { \
-	dialog --title "Welcome!" --msgbox "Welcome $uname !\\n\\nThis script will automatically install DWM with my config files which I use as my main machine." 10 60
+echo "################################################################"
+echo "## Syncing the repos and installing 'dialog' if not installed ##"
+echo "################################################################"
+sudo pacman --noconfirm --needed -Sy dialog || error "Error syncing the repos."
 
-	dialog --colors --title "Important Note!" --yes-label "All ready!" --no-label "Exit..." --yesno "\nBe sure you have an active internet connection ." 8 70 || { clear; exit 1; }
+welcome() { \
+	dialog --title "Welcome!" --msgbox "Welcome $uname !\\n\\nThis script will automatically install DWM with my config files which I use on my main machine." 10 60
+
+	dialog --title "Important Note!" --yes-label "All ready!" --no-label "Exit..." --yesno "\nBe sure you have an active internet connection ." 8 70 
 }
+
+welcome || error "User choose to exit"
 
 ## display pre installation message
 preinstallmsg() { \
 	dialog --title "Last Remainder!" --yes-label "Let's go!" --no-label "Nope, thank you!" --yesno "\nStart the installation process by pressing <Let's go!> and the system will begin installation!\n\n OR \n\n you can cancell it" 13 60 || { clear; exit 1; }
 }
 
-## in case of any interruption 
-error() { printf "%s\n" "$1" >&2; exit 1; }
+clonerepo() { \
+  echo "################################################################"
+  echo "## cloning dotfiles && You will get your old ~/.config in ~/.config.bak"
+  echo "################################################################"
 
-cpyconfig() { #copying config at right places
-	dialog --info "copying .xprofile .xinitrc and .zprofile" 2 50
-	cp "$HOME/.config/x/.xprofile" "$HOME/.config/.xprofile"
-	cp "$HOME/.config/x/.xinitrc" "$HOME/.config/.xinitrc"
-	cp "$HOME/.config/zsh/.zprofile" "$HOME/.zprofile"
+  [ -d 'dotfiles' ] && echo "backing up you dotfiles directory" && mv -f dotfiles dotfiles.bak
+  git clone https://github.com/abhishek416/dotfiles.git -b stable 
+
+  for x in bspwm i3 nitrogen nvim-coc nvim.lua sxhkd xmobar xmonad desktop.png; do
+    rm -rf 'dotfiles/$x' >/dev/null 2>&1;
+  done
+  
+  if [ -d "$HOME/.config" ]; then
+    mv $HOME/.config $HOME/.config.bak
+    mv dotfiles $HOME/.config
+  else
+    mv dotfiles $HOME/.config
+  fi
+
+  if [ ! -d 'fonts' ]; then
+    echo "fonts directory not found."
+    echo "Please download copy fonts from my ardwm repo"
+    echo "OR you won't see your bar icons"
+  else
+    mv -f 'fonts' '$HOME/.local/share/'
+  fi
 }
+
 
 installdwm() { #installing dwm
 	dialog --info "installing dwm as your window manager && \ndmenu as application launcher" 4 50
@@ -52,31 +69,25 @@ installdwm() { #installing dwm
 	cd "$HOME/.config/suckless/dmenu-5.0/"
 	sudo make clean install >/dev/null 2>&1
 	cd "$HOME"
-	cp -rf "ardwm/bin" "$HOME/.local/"
-	ln -s "$HOME/.local/bin" "$HOME/bin"
 }
 
-putgitrepo() { # Downloads a gitrepo $1 and places the files in $2 only overwriting conflicts
-	dialog --infobox "Downloading and installing config files..." 4 60
-	[ -d 'dotfiles' ] && dialog --infobox "backing up your dotfiles directory" &&	mv -f dotfiles dotfiles.bak
-	git clone https://github.com/Abhishek416/dotfiles.git -b stable
-	[ ! -d "$HOME/.config" ] && mkdir -p "$HOME/.config"
-	cp -rf 'dotfiles/*' '$HOME/.config/'
+managebar() { \ #managing bar
+  dialog --info "configuring your bar" 4 50
+  cd "$HOME"
+  cp -rf "$HOME/.config/bin" .
 }
 
-maininstall() { # Installs all needed programs from main repo.
-	dialog --title "Installaing" --infobox "Installing \`$1\` ($n of $total). $1" 5 70
-	sudo pacman --noconfirm --needed -S "$1" >/dev/null 2>&1
-	}
+cpyconfig() { #placing config at right places
+	dialog --info ".bash_profile .xinitrc and .zprofile" 2 50
+  cp "$HOME/.config/bash/.bash_profile" "$HOME/.bash_profile"
+	cp "$HOME/.config/x/.xinitrc" "$HOME/.config/.xinitrc"
+	cp "$HOME/.config/zsh/.zprofile" "$HOME/.zprofile"
+}
 
-installationloop(){ \
-	([ -f "$progsfile" ] && cp "$progsfile" /tmp/progs.csv) || curl -Ls "$progsfile" > /tmp/progs.csv
-	total=$(wc -l < /tmp/progs.csv)
-
-	while IFS=, read -r program; do
-		n=$((n+1))
-		maininstall "$program" 
-	done < /tmp/progs.csv ;
+unmutealsa() { \
+  amixer sset Master unmute 
+  amixer sset Speaker unmute
+  amixer sset Headphone unmute
 }
 
 finalize(){ \
@@ -88,40 +99,25 @@ finalize(){ \
 ### THE ACTUAL SCRIPT ###
 #########################
 
-# welcome function
-welcomemsg || error "User existed"
-
-
-# Last chance for user to back out before install.
-preinstallmsg || error "user exited."
-
-for x in curl base-devel git ntp zsh; do
+for x in curl base-devel git zsh; do
 	dialog --title "installing" --infobox "installing \`$x\` which is required to install and configure other programs." 5 70
 	# installpkg "$x"
   sudo pacman --noconfim --needed -S "$x" >/dev/null 2>&1 ;
 done
 
-# main installation loop 
-installationloop
+clonerepo || error "User Exited"
 
-# Install dotfiles in user's home directory
-putgitrepo || echo "user exited. "
-rm -f "/home/$uname/.config/README.md" "/home/$uname/.config/desktop.png" "/home/$uname/.config/.git/" "/home/$uname/.config/nitrogen"
-cd "/home/$uname/"
+installdwm || error "Error While Installing dwm"
 
-# copying xprofile and zprofile 
+managebar 
 cpyconfig
-
-# installing dwm && dmenu
-installdwm
 
 # make zsh as default shell
 chsh -s /bin/zsh "$name" >/dev/null 2>&1
 sudo -u "$name" mkdir -p "/home/$uname/.cache/zsh/"
 
 # unmute alsa 
-#
-#
+unmutealsa || error "error while unmuting alsa"
 
 # Last message! Install complete!
 finalize
