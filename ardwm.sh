@@ -78,10 +78,10 @@ managebar() { \ #managing bar
 }
 
 cpyconfig() { #placing config at right places
-	dialog --info ".bash_profile .xinitrc and .zprofile" 2 50
-  cp "$HOME/.config/bash/.bash_profile" "$HOME/.bash_profile"
-	cp "$HOME/.config/x/.xinitrc" "$HOME/.config/.xinitrc"
-	cp "$HOME/.config/zsh/.zprofile" "$HOME/.zprofile"
+	dialog --info "linking bash_profile .xinitrc and .zprofile" 2 50
+  ln -s "$HOME/.config/bash/bash_profile" "$HOME/.bash_profile"
+	ln -s "$HOME/.config/x/xinitrc" "$HOME/.xinitrc"
+	ln -s "$HOME/.config/zsh/zprofile" "$HOME/.zprofile"
 }
 
 unmutealsa() { \
@@ -101,7 +101,6 @@ finalize(){ \
 
 for x in curl base-devel git zsh; do
 	dialog --title "installing" --infobox "installing \`$x\` which is required to install and configure other programs." 5 70
-	# installpkg "$x"
   sudo pacman --noconfim --needed -S "$x" >/dev/null 2>&1 ;
 done
 
