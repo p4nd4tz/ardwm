@@ -16,7 +16,6 @@ ranger
 w3m 
 uberzerg
 libgsf
-
 discord 
 telegram-desktop 
 qbittorrent

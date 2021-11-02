@@ -41,16 +41,15 @@ clonerepo() { \
   [ -d 'dotfiles' ] && echo "backing up you dotfiles directory" && mv -f dotfiles dotfiles.bak
   git clone https://github.com/abhishek416/dotfiles.git -b stable 
 
-  for x in bspwm i3 nitrogen nvim-coc nvim.lua sxhkd xmobar xmonad desktop.png; do
+  for x in bspwm i3 nitrogen nvim-coc nvim.lua sxhkd xmobar xmonad desktop.png README.md .git; do
     rm -rf 'dotfiles/$x' >/dev/null 2>&1;
   done
   
   if [ -d "$HOME/.config" ]; then
     mv $HOME/.config $HOME/.config.bak
-    mv dotfiles $HOME/.config
-  else
-    mv dotfiles $HOME/.config
   fi
+
+  mv dotfiles $HOME/.config
 
   if [ ! -d 'fonts' ]; then
     echo "fonts directory not found."
@@ -74,7 +73,15 @@ installdwm() { #installing dwm
 managebar() { \ #managing bar
   dialog --info "configuring your bar" 4 50
   cd "$HOME"
-  cp -rf "$HOME/.config/bin" .
+  if [ ! -d '$HOME/.local/bin' ]; then
+    mkdir $HOME/.local/bin
+    cp -rf "$HOME/.config/bin/dwm_status" "$HOME/.local/bin/"
+    rm -rf "$HOME/.config/bin"
+  else if [ -d '$HOME/.local/bin' ]; then
+    cp -rf "$HOME/.config/bin/dwm_status" "$HOME/.local/bin/"
+    rm -rf "$HOME/.config/bin"
+  fi
+  # cp -rf "$HOME/.config/bin" 
 }
 
 cpyconfig() { #placing config at right places
@@ -82,6 +89,7 @@ cpyconfig() { #placing config at right places
   ln -s "$HOME/.config/bash/bash_profile" "$HOME/.bash_profile"
 	ln -s "$HOME/.config/x/xinitrc" "$HOME/.xinitrc"
 	ln -s "$HOME/.config/zsh/zprofile" "$HOME/.zprofile"
+  ln -s "$HOME/.local/bin" "$HOME/bin"
 }
 
 unmutealsa() { \
