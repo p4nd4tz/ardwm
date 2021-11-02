@@ -54,7 +54,7 @@ clonerepo() { \
 
   if [ ! -d 'fonts' ]; then
     echo "fonts directory not found."
-    echo "Please download copy fonts from my ardwm repo"
+    echo "Please download OR copy fonts from my ardwm repo"
     echo "OR you won't see your bar icons"
   else
     mv -f 'fonts' '$HOME/.local/share/'
