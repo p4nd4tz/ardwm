@@ -40,10 +40,8 @@ clonerepo() { \
 
   [ -d 'dotfiles' ] && echo "backing up you dotfiles directory" && mv -f dotfiles dotfiles.bak
   git clone https://github.com/abhishek416/dotfiles.git -b stable 
-
-  for x in bspwm i3 nitrogen nvim-coc nvim.lua sxhkd xmobar xmonad desktop.png README.md .git; do
-    rm -rf 'dotfiles/$x' >/dev/null 2>&1;
-  done
+  
+  rm -rf 'dotfiles/{bspwm,i3,nitrogen,nvim-coc,nvim.lua,sxhkd,xmobar,xmonad,desktop.ong,README.md,.git}'
   
   if [ -d "$HOME/.config" ]; then
     mv $HOME/.config $HOME/.config.bak
@@ -53,11 +51,17 @@ clonerepo() { \
 
   if [ ! -d 'fonts' ]; then
     echo "fonts directory not found."
-    echo "Please download OR copy fonts from my ardwm repo"
-    echo "OR you won't see your bar icons"
-  else
-    mv -f 'fonts' '$HOME/.local/share/'
+    echo "please download or copy fonts from my ardwm repo"
+    echo "or you won't see your bar icons"
   fi
+
+  if [ ! -d '$HOME/.local' ]; then
+    echo "'$HOME/.local' not present. Creating $HOME/.local/share "
+    mkdir -p $HOME/.local/share/
+  elif [ -d '$HOME/.local' ] && [ ! -d '$HOME/.local/share' ]; then
+    mkdir $HOME/.local/share
+  fi
+  mv 'fonts' $HOME/.local/share
 }
 
 
@@ -75,13 +79,9 @@ managebar() { \ #managing bar
   cd "$HOME"
   if [ ! -d '$HOME/.local/bin' ]; then
     mkdir $HOME/.local/bin
-    cp -rf "$HOME/.config/bin/dwm_status" "$HOME/.local/bin/"
-    rm -rf "$HOME/.config/bin"
-  else if [ -d '$HOME/.local/bin' ]; then
-    cp -rf "$HOME/.config/bin/dwm_status" "$HOME/.local/bin/"
-    rm -rf "$HOME/.config/bin"
   fi
-  # cp -rf "$HOME/.config/bin" 
+  cp -rf "$HOME/.config/bin/dwm_status" "$HOME/.local/bin/"
+  rm -rf "$home/.config/bin"
 }
 
 cpyconfig() { #placing config at right places
