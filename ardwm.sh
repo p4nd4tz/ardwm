@@ -121,7 +121,8 @@ cpyconfig
 
 # make zsh as default shell
 chsh -s /bin/zsh "$name" >/dev/null 2>&1
-sudo -u "$name" mkdir -p "/home/$uname/.cache/zsh/"
+sudo -u "$name" mkdir -p "/home/$uname/.cache/zsh"
+sudo -u "$name" mkdir -p "/home/$uname/.cache/bash"
 
 # unmute alsa 
 unmutealsa || error "error while unmuting alsa"
