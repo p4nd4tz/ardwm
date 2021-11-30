@@ -3,8 +3,7 @@
 uname=$(whoami)
 
 if [ "$(id -u)" = 0 ]; then
-  echo "##################################################################"
-  echo "This script MUST NOT be run as root user."
+  echo "##################################################################" echo "This script MUST NOT be run as root user."
   echo "cause you could ruin you system."
   echo "And you do not want to install your base system again"
   echo "##################################################################"
@@ -67,9 +66,9 @@ clonerepo() { \
 
 installdwm() { #installing dwm
 	dialog --info "installing dwm as your window manager && \ndmenu as application launcher" 4 50
-	cd "$HOME/.config/suckless/dwm-6.2/"
+	cd "$HOME/.config/suckless/dwm/"
 	sudo make clean install >/dev/null 2>&1
-	cd "$HOME/.config/suckless/dmenu-5.0/"
+	cd "$HOME/.config/suckless/dmenu/"
 	sudo make clean install >/dev/null 2>&1
 	cd "$HOME"
 }
@@ -123,6 +122,8 @@ cpyconfig
 chsh -s /bin/zsh "$name" >/dev/null 2>&1
 sudo -u "$name" mkdir -p "/home/$uname/.cache/zsh"
 sudo -u "$name" mkdir -p "/home/$uname/.cache/bash"
+sudo -u "$name" touch "/home/$uname/.cache/zsh/history"
+sudo -u "$name" touch "/home/$uname/.cache/bash/history"
 
 # unmute alsa 
 unmutealsa || error "error while unmuting alsa"
